@@ -8,18 +8,22 @@
 (def data (->> (line-seq (io/reader (io/resource "adv2022/day1/input.txt")))
                (partition-by string/blank?)
                (remove (comp string/blank? first))
-               (map #(map parse-int %))))
+               (map #(map read-string %))))
 
 (defn totals [data]
   (mapv #(apply + %) data))
 
 (def part1 (->> (totals data)
-               (apply max)))
+                (apply max)))
 
 (def part2 (->> (totals data)
-               (sort >)
-               (take 3)
-               (apply + )))
+                (sort >)
+                (take 3)
+                (apply +)))
+
+#_(= 69912 part1)
+
+#_(= 208180 part2)
 
 
 
