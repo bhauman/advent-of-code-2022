@@ -31,7 +31,7 @@
   (->> data
        (partition 3)
        (map intersection-score)
-   (apply +)))
+       (apply +)))
 
 #_(= 2650 (part2 data))
 
