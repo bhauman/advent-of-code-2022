@@ -46,4 +46,32 @@
        (reduce move-x-a->b columns commands)))
 
 
+;; alternat parsing of columns
+(def columns-alt
+  (->> (slurp "src/adv2022/day5/columns-orig.txt")
+       string/split-lines
+       (mapv #(partition-all 4 (seq %)))
+       (apply map vector)
+       (map #(string/join (flatten %)))
+       (map #(read-string (str "[" % "]")))
+       (map (comp flatten butlast))))
+
+;; works for missing trailing whitespace
+(def columns-alt2
+  (->> (slurp "src/adv2022/day5/columns-orig.txt")
+       string/split-lines
+       (mapv #(partition-all 4 (seq %)))
+       (vector [])
+       (iterate (comp (juxt (partial map first)
+                            (partial map rest))
+                      second))
+       rest
+       (take 9)
+       (map (comp
+             flatten
+             butlast
+             #(read-string (str "[" % "]"))
+             (partial apply str)
+             flatten
+             first)))) 
 
