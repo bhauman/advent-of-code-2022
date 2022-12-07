@@ -30,19 +30,16 @@
     :else 
     (update data :path conj arg)))
 
-(defn parse-into-file-tree [dir-walk-output]
-  (reduce make-dir-tree {:path [:tree] :tree {}} dir-walk-output))
-
-(defn directory-totals [input]
-  (->> dir-commands-output
-       parse-into-file-tree
+(defn directory-totals [input-commands]
+  (->> input-commands
+       (reduce make-dir-tree {:path [:tree] :tree {}})
        :tree
        (postwalk (fn [node]
                    (if (map? node)
                      [(apply + (map #(if (vector? %) (first %) %) (vals node)))
                       (filter vector? (vals node))]
                      node)))
-     flatten))
+       flatten))
 
 (defn part1 [data]
   (->> (directory-totals data)
