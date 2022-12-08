@@ -40,7 +40,7 @@
                       (concat
                        (visible-indexes-dir addr-down idx tree-row)
                        (visible-indexes-dir addr-up idx (reverse tree-row))))
-                            (apply map vector grid-data))
+                    (apply map vector grid-data))
        (concat (map-indexed (fn [idx tree-row]
                               (concat
                                (visible-indexes-dir addr-right idx tree-row)
