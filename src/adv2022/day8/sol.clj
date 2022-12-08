@@ -61,7 +61,7 @@
   ((juxt
     (comp reverse first)
     (comp (partial drop 1) second))
-   (split-at row (get (apply mapv vector grid-data) col)))))
+   (split-at row (map #(nth % col) grid-data)))))
 
 (defn take-upto-and-next [pred coll]
   (let [[a b] (split-with pred coll)]
@@ -74,12 +74,11 @@
          (map count)
          (apply *))))
 
-(def part2 []
-  (time
-   (reduce max -1
-           (for [x (range 99)
-                 y (range 99)]
-             (visible-tree-score grid-data [x y])))))
+(defn part2 []
+  (reduce max -1
+          (for [x (range 99)
+                y (range 99)]
+            (visible-tree-score grid-data [x y]))))
 
 #_(= (part2) 284648)
 
