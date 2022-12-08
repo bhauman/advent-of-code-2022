@@ -74,13 +74,14 @@
          (map count)
          (apply *))))
 
-(defn part2 []
+(defn part2 [grid-data]
   (reduce max -1
           (for [x (range 99)
                 y (range 99)]
             (visible-tree-score grid-data [x y]))))
 
-#_(= (part2) 284648)
+(assert (= (part2 grid-data) 284648))
+
 
 
 
