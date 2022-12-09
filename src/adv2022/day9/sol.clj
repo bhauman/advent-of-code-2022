@@ -36,10 +36,10 @@
       (#{[1 2] [2 2]} (sort diff-abs))
       (let [[diff-x diff-y] diff]
         (cond-> tail-pos
-          (> diff-y 0) (down)
-          (< diff-y 0) (up)
-          (> diff-x 0) (right)
-          (< diff-x 0) (left)))
+          (> diff-y 0) down
+          (< diff-y 0) up
+          (> diff-x 0) right
+          (< diff-x 0) left))
       :else (throw (ex-info "Shouldn't get here" {:t tail-pos
                                                   :h head-pos
                                                   :diff diff
