@@ -53,7 +53,7 @@
               (#(assoc % :tail-pos (move-tail-pos (:head-pos %) (:tail-pos %))))))
         {:head-pos [0 4]
          :tail-pos [0 4]}
-        (parse input))
+        data)
        (map :tail-pos)
        distinct
        count))
