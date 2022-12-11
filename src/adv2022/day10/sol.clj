@@ -20,6 +20,12 @@
                        (= 'addx i) (+ a)))
                    1)))
 
+;; great idea from tshady to get the x-values
+
+#_(->> (edn/read-string (str "[" (slurp "src/adv2022/day10/input.txt") "]"))
+       (map #(if (symbol? %1) 0 %1))
+       (reductions + 1))
+
 (defn part1 [instructions]
   (->> (x-values instructions)
        (partition 20 40)
