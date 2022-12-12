@@ -53,48 +53,23 @@
 
 ;; part2 modulo nums
 
+(def ^:dynamic *base-mod* 0)
+
 (defn modulo* [a b m]
   (mod (* (mod a m) (mod b m)) m))
 
 (defn modulo+ [a b m]
   (mod (+ (mod a m) (mod b m)) m))
 
-(defn create-initial-modulo-number [mods num]
-  (->> mods
-       (map (juxt identity (partial mod num)))
-       (into {})))
-
-(defn initialize-items [monkeys]
-  (let [mods (map (comp #(nth % 3) second) monkeys)]
-    (mapv
-     #(update % 0 (partial map (partial create-initial-modulo-number mods)))
-     monkeys)))
-
-(defn update-vals [m f] 
-  (reduce-kv (fn [mp k v] (assoc mp k (f v k))) {} m))
-
-(defn square-mod-num [mod-num]
-  (update-vals mod-num (fn [v m] (modulo* v v m))))
-
-(defn add-mod-num [mod-num arg]
-  (update-vals mod-num (partial modulo+ arg)))
-
-(defn mult-mod-num [mod-num arg]
-  (update-vals mod-num (partial modulo* arg)))
-
-(defn op-on-modulo-number [op op-arg mod-num]
-  (if (= op-arg 'old)
-    (square-mod-num mod-num)
+(defn mod-op [op op-arg mod-num]
+  (let [op-arg (if (= op-arg 'old) mod-num op-arg)]
     (condp = op
-      '+ (add-mod-num mod-num op-arg)
-      '* (mult-mod-num mod-num op-arg))))
-
-(defn mod-num-modulo [mod-num m]
-  (get mod-num m))
+      '+ (modulo+ mod-num op-arg *base-mod*)
+      '* (modulo* mod-num op-arg *base-mod*))))
 
 (defn monkey-operate [monkeys item [_old op op-arg divis-by t-monkey f-monkey :as args]]
-  (let [new-item (op-on-modulo-number op op-arg item)]
-    (update-in monkeys [(if (zero? (mod-num-modulo new-item divis-by))
+  (let [new-item (mod-op op op-arg item)]
+    (update-in monkeys [(if (zero? (mod new-item divis-by))
                           t-monkey
                           f-monkey) 0]
                conj new-item)))
@@ -114,20 +89,22 @@
    (range (count (second count-accum-monkeys)))))
 
 (defn part2 [monkeys num-rounds]
-  (->>
-   (iterate monkey-around [{} (initialize-items monkeys)])
-   (take (inc num-rounds))
-   last
-   first
-   vals
-   (sort >)
-   (take 2)
-   (apply *)))
+  (let [mods (map (comp #(nth % 3) second) monkeys)]
+    (binding [*base-mod* (apply * mods)]
+      (->>
+       (iterate monkey-around [{} monkeys])
+       (take (inc num-rounds))
+       last
+       first
+       vals
+       (sort >)
+       (take 2)
+       (apply *)))))
 
 #_(assert (= 21115867968 (part2 start-monkeys 10000)))
 (assert (= 210627168 (part2 start-monkeys 1000)))
 
-
+;; this can be reduced to a single implementation but I've spent enough time already
 
 
 
