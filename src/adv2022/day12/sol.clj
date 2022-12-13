@@ -67,8 +67,6 @@
 
 (defn make-end-fn [end-node] #(-> % first (= end-node)))
 
-#_(grid-find-element-pos (parse test-data) START)
-
 (defn part1 [grid]
   (let [start (grid-find-element-pos grid START)
         end (grid-find-element-pos grid END)
