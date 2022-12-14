@@ -38,12 +38,6 @@
 
 (def draw-lines (partial reduce draw-line {}))
 
-(defn extents [grid-map]
-  (let [pos (conj (keys grid-map) SOURCE-POS)
-        ys (sort (map first pos))
-        xs (sort (map second pos))]
-    [[(first ys) (first xs)] [(last ys) (last xs)]]))
-
 (defn sand-falls [grid start-point limit floor]
   (when-not (or (grid start-point) (zero? limit)) 
     (if-let [new-pos (->> (map (partial map + start-point) [[1 0] [1 -1] [1 1]])
@@ -58,16 +52,20 @@
                 grid)
        (take-while not-empty)))
 
+(defn extents [grid-map]
+  (let [pos (conj (keys grid-map) SOURCE-POS)
+        ys (sort (map first pos))
+        xs (sort (map second pos))]
+    [[(first ys) (first xs)] [(last ys) (last xs)]]))
+
 (defn print-grid [grid-map]
   (println "---------------------")
   (let [[[y x] [y1 x1]] (extents grid-map)]
-    (mapv 
-     (fn [y']
-       (println
-        (apply str (map (fn [x'] (get grid-map [y' x'] \.))
-                        
-                        (range x (inc x1))))))
-     (range y (inc y1)))))
+    (doseq [y' (range y (inc y1))]
+     (->> (range x (inc x1))
+          (mapv (fn [x'] (get grid-map [y' x'] \.)))
+          (apply str)
+          println))))
 
 (defn part1 [input]
   (let [all-steps (-> (parse input)
@@ -82,7 +80,7 @@
   (let [grid (draw-lines (parse input))
         [[_ _] [max-y _]] (extents grid)
         all-steps (fill-with-sand grid 1000 (+ max-y 2))]
-    (print-grid (last all-steps))
+    #_(print-grid (last all-steps))
     (dec (count all-steps))))
 
 #_(= 30157 (part2 real-input))
