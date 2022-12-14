@@ -69,8 +69,8 @@
 
 (defn part1 [input]
   (let [all-steps (-> (parse input)
-                       draw-lines
-                       (fill-with-sand 1000 nil))]
+                      draw-lines
+                      (fill-with-sand 1000 nil))]
     (print-grid (last all-steps))
     (dec (count all-steps))))
 
@@ -80,7 +80,7 @@
   (let [grid (draw-lines (parse input))
         [[_ _] [max-y _]] (extents grid)
         all-steps (fill-with-sand grid 1000 (+ max-y 2))]
-    #_(print-grid (last all-steps))
+    (print-grid (last all-steps))
     (dec (count all-steps))))
 
 #_(= 30157 (part2 real-input))
