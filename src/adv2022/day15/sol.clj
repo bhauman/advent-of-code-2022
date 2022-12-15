@@ -24,8 +24,7 @@
   (apply + (mapv abs (map - p1 p2))))
 
 (defn in-range? [[s-pos b-pos :as sensor] pos]
-  (and (not= b-pos pos)
-       (<= (man-dist s-pos pos) (man-dist s-pos b-pos))))
+  (<= (man-dist s-pos pos) (man-dist s-pos b-pos)))
 
 (defn sensor-extents-for-row [[[sy sx :as s-pos] b-pos :as sensor] row]
   (when (in-range? sensor [row sx])
@@ -90,7 +89,7 @@
        :else [min-x max-x]))
    extents))
 
-(defn empty-positions-in-row [sensors target-row max-x]
+(defn row-extents [sensors target-row max-x]
   (let [simplified-extents
         (->> sensors
              (keep #(sensor-extents-for-row % target-row))
@@ -100,19 +99,22 @@
     (when (> (count trunc-ext) 1)
       trunc-ext)))
 
-(defn part2 [sensors max-x]
-  (let [row-ext (keep #(when-let [res (empty-positions-in-row sensors % max-x)]
-                         (vector res %))
-                      (range 0 (inc max-x)))]
-    (when (= (count row-ext) 1)
-      (let [[[[_ x-end] [x-begin _]] y] (first row-ext)
-            x (dec x-begin)]
-        (+ (* x 4000000) y)))))
+(defn part2 [sensors max-xy]
+  (let [row-ext
+        (->> (shuffle (range 0 (inc max-xy))) ;; random search
+             (keep #(when-let [res (row-extents sensors % max-xy)]
+                      (vector res %)))
+             first)]
+    (let [[[_ [x-begin _]] y] row-ext
+          x (dec x-begin)]
+      [x y (+ (* x 4000000) y)])))
 
-#_(= 56000011 (part2 test-input 20))
+#_(= 56000011 (last (part2 test-input 20)))
+
 #_(do
-    (def res2 (time (part2 real-input 4000000)))
-    (prn res2))
+    (def res2 (last (part2 real-input 4000000)))
+    (prn res2)
+    (assert (= res2 12413999391794)))
 
 
 
