@@ -110,10 +110,10 @@
 
 (defn tps-make-children-fn [routes costs]
   (fn [path node]
-    (let [length (path-step-length routes path)
+    (let [length (path-step-length routes (cons node path))
           children
           (->> (remove (into #{node} path) (keys (get routes node)))
-               (filter #(<= (+ length (count (get-in routes [node %]))) *minutes*)))]
+               (filter #(< (+ length (count (get-in routes [node %]))) *minutes*)))]
       (if *take-opt*
         (->> children
              (map (fn [next-child] [node
@@ -157,24 +157,15 @@
      (list)
      'AA)))
 
-#_(combo/cartesian-product [1] [1])
 #_(= 1651 (part1 test-input))
 #_(= 1751 (part1 real-input))
 
 (def ^:dynamic *costs* nil)
+(def ^:dynamic *taker* nil)
 
 (defn binary-tps-report [children-fn score-fn seen path1 node1 path2 node2]
   (let [children1 (remove (set seen) (children-fn path1 node1))
-        children2 (remove (set seen) (children-fn path2 node2))
-        children-pairs
-        (->> (combo/cartesian-product children1 children2)
-             (remove (fn [[a b]] (= a b)))
-             (map (fn [[c1 c2 :as pair]]
-                    (vary-meta pair assoc
-                               ::cost (+ (get-in *costs* [node1 c1])
-                                         (get-in *costs* [node2 c2])))))
-             (sort-by #(::cost (meta %)))
-             (take 25))]
+        children2 (remove (set seen) (children-fn path2 node2))]
     (cond
       (and (empty? children1) (empty? children2))
       (+ (score-fn (cons node1 path1))
@@ -233,33 +224,51 @@
                      c1
                      (cons node2 path2)
                      c2))
-                  children-pairs
-                  )))))
+                  (->> (combo/cartesian-product children1 children2)
+                       (remove (fn [[a b]] (= a b)))
+                       #_(shuffle)
+                       #_((fn [x] (prn (count x)) x))
+                       (map (fn [[c1 c2 :as pair]]
+                              (vary-meta pair assoc
+                                         ::cost (+ (get-in *costs* [node1 c1])
+                                                   (get-in *costs* [node2 c2])))))
+                       (sort-by #(::cost (meta %)))
+                       (take *taker*)))))))
 
 
-(defn part2 [input]
+
+(defn make-part2 [input]
   (binding [*minutes* 26
             *take-opt* false]
     (let [graph (make-graph input)
           all-routes (all-distances graph 'AA)
-          costs (traversal-costs graph all-routes)]
-      (binding [*costs* costs]
-        (binary-tps-report
-         (memoize (tps-make-children-fn all-routes costs))
-         (memoize (tps-make-score-fn graph all-routes))
-         #{}
-         (list)
-         'AA
-         (list)
-         'AA)))))
+          costs (traversal-costs graph all-routes)
+          children-fn (memoize (tps-make-children-fn all-routes costs))
+          score-fn (memoize (tps-make-score-fn graph all-routes))]
+      (fn [limit]
+        (binding [*costs* costs
+                  *minutes* 26
+                  *take-opt* false
+                  *taker* limit]
+          (#'binary-tps-report
+           children-fn
+           score-fn 
+           #{}
+           (list)
+           'AA
+           (list)
+           'AA))))))
 
-#_(= 1707 (part2 test-input))
+(def test-part2 (make-part2 test-input))
+
+#_(= 1707 (test-part2 4))
+
+(def real-part2 (make-part2 real-input))
 
 #_(time
    (do
-     (def res (part2 real-input))
+     (def res (real-part2 80))
      (prn res)
      (beep)))
-
 
 
