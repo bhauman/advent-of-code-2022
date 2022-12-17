@@ -4,7 +4,6 @@
    [clojure.string :as string]
    [clojure.math.combinatorics :as combo]))
 
-
 (defn parse-input [s]
   (as-> s x
     (str "[" x "]")
@@ -102,19 +101,21 @@
 (defn part2 [sensors max-xy]
   (let [row-ext
         (->> (shuffle (range 0 (inc max-xy))) ;; random search
-             (keep #(when-let [res (row-extents sensors % max-xy)]
+             (pmap #(when-let [res (row-extents sensors % max-xy)]
                       (vector res %)))
+             (filter not-empty)
              first)]
     (let [[[_ [x-begin _]] y] row-ext
           x (dec x-begin)]
       [x y (+ (* x 4000000) y)])))
 
-#_(= 56000011 (last (part2 test-input 20)))
+#_(time (= 56000011 (last (part2 test-input 20))))
 
-#_(do
-    (def res2 (last (part2 real-input 4000000)))
-    (prn res2)
-    (assert (= res2 12413999391794)))
+#_(time
+   (do
+     (def res2 (last (part2 real-input 4000000)))
+     (prn res2)
+     (assert (= res2 12413999391794))))
 
 
 
