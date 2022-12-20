@@ -1,12 +1,8 @@
 (ns adv2022.day20.sol
   (:require
    [clojure.string :as string]
-   [clojure.set :as set]
    [clojure.edn :as edn]
    [clojure.math :as math]
-   [clojure.math.combinatorics :as combo]
-   [adv2022.grid :as grid]
-   [adv2022.utils :as util]
    [clojure.data.priority-map :refer [priority-map] :as pri]))
 
 (def input-test (slurp "src/adv2022/day20/input.test"))
