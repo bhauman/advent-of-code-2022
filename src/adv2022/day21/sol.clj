@@ -71,7 +71,6 @@
 (assert (= 157714751182692 (part1 (parse input-real))))
 
 
-
 (defn update-for-part2 [input]
   (-> (into {}
             (map (juxt first identity))
@@ -79,27 +78,25 @@
       (dissoc 'humn)
       (update 'root (fn [[k arg1 op arg2]] [k arg1 '- arg2]))
       vals
-      (->> (sort-by (comp number? second)))
-      reverse))
+      (->> (sort-by (comp number? second))
+           reverse)))
 
 (defn get-symbolic-solution [input]
-  (let [initially-solved
-        (-> (->> input
-                 update-for-part2
-                 init-state
-                 (iterate solve)
-                 (partition 2 1)
-                 (drop-while
-                  (fn [[state next-state]] (not= state next-state)))
-                 ffirst))]
-    (-> initially-solved
-        (assoc-in [:solved :humn] 'humn)
-        (assoc :symbolic? true)
-        (->>
-         (iterate solve)
-         (drop-while #(get-in % [:left :root]))
-         first)
-        (get-in [:solved :root]))))
+  (-> input
+      (->> update-for-part2
+           init-state
+           (iterate solve)
+           (partition 2 1)
+           (drop-while
+            (fn [[state next-state]] (not= state next-state)))
+           ffirst)
+      (assoc-in [:solved :humn] 'humn)
+      (assoc :symbolic? true)
+      (->>
+       (iterate solve)
+       (drop-while #(get-in % [:left :root]))
+       first)
+      (get-in [:solved :root])))
 
 (defn norm [[op exp1 exp2 :as all]]
   (condp = op
@@ -107,7 +104,7 @@
          ['+ (* -1 exp2) exp1]
          ['+ exp1 ['* -1 exp2]])
     '/ (if (number? exp2)
-         ['* (/ 1 exp2) exp1 ]
+         ['* (/ 1 exp2) exp1]
          all)
     (if (number? exp2) [op exp2 exp1] all)))
 
