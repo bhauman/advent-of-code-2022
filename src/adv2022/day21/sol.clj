@@ -9,8 +9,6 @@
    [clojure.core.match :refer [match]]))
 
 #_(add-tap (bound-fn* clojure.pprint/pprint))
-;; can sort by deps
-;; or can solve in steps
 
 (def input-test (slurp "src/adv2022/day21/input.test"))
 (def input-real (slurp "src/adv2022/day21/input.txt"))
@@ -23,28 +21,31 @@
        (sort-by (comp number? second))
        reverse))
 
+(defn make-monkey-fn [vs]
+  (let [[d1 op d2] vs 
+        [dep1 dep2] (map keyword [d1 d2])]
+    (vary-meta (fn [monkey-map]
+                 (let [arg1 (get monkey-map dep1)
+                       arg2 (get monkey-map dep2)]
+                   (assert (and arg1 arg2))
+                   ((eval op) arg1 arg2)))
+               assoc
+               :deps #{dep1 dep2}
+               :symbolic (fn [monkey-map]
+                           (list
+                            op
+                            (get monkey-map dep1 dep1)
+                            (get monkey-map dep2 dep2))))))
+
 (defn init-state [monkeys]
-  (let [init (->> monkeys
-                  (map (fn [[k v & vs]]
-                         [(keyword k)
-                          (if (number? v)
-                            v
-                            (let [d1 v
-                                  [op d2] vs 
-                                  [dep1 dep2] (map keyword [d1 d2])]
-                              (vary-meta (fn [monkey-map]
-                                           (let [arg1 (get monkey-map dep1)
-                                                 arg2 (get monkey-map dep2)]
-                                             (assert (and arg1 arg2))
-                                             ((eval op) arg1 arg2)))
-                                         assoc
-                                         :deps #{dep1 dep2}
-                                         :symbolic (fn [monkey-map]
-                                                     (list
-                                                      op
-                                                      (get monkey-map dep1 dep1)
-                                                      (get monkey-map dep2 dep2))))))]))
-                  (group-by (comp number? second)))]
+  (let [init
+        (->> monkeys
+             (map (fn [[k & vs]]
+                    [(keyword k)
+                     (if (number? (first vs))
+                       (first vs)
+                       (make-monkey-fn vs))]))
+             (group-by (comp number? second)))]
     {:solved (into {} (get init true))
      :left (into {} (get init false))}))
 
@@ -69,7 +70,7 @@
 
 (assert (= 157714751182692 (part1 (parse input-real))))
 
-;; tempting to put together a function for part2
+
 
 (defn update-for-part2 [input]
   (-> (into {}
