@@ -89,3 +89,61 @@
        (def res (part2 (parse input-real)))
        (prn [:res res])
        res))
+
+;; ALTERNATE IMPLEMENTATION
+;; now that I understand the problem better
+;; simulate a cicular list
+;; takes longer because negative nums are translated into positive nums
+
+(defn lazy-insert [lst item idx limit]
+  (if (= idx 0)
+    (cons item (take limit lst))
+    (cons (first lst)
+          (lazy-seq
+           (lazy-insert (rest lst) item (dec idx) (dec limit))))))
+
+(defn move-item [lst [index-diff _ :as item-a]]
+  (if (zero? index-diff)
+    lst
+    (let [new-size (dec (count lst))
+          diff (cond->> (mod (abs index-diff) new-size)
+                 (neg? index-diff) (- new-size))
+          items (->> (cycle lst)
+                     (drop-while #(not= item-a %))
+                     rest
+                     (take new-size))]
+      (lazy-insert (concat items items) item-a diff new-size))))
+
+(defn test-part1 [input]
+  (let [lst (map-indexed
+             (comp vec reverse vector)
+             input)]
+    (->> (reduce move-item lst lst)
+         (map first)
+         grove-coords
+         (reduce +))))
+
+#_(= 3 (test-part1 (parse input-test)))
+#_(= 4151 (time (test-part1 (parse input-real))))
+
+(defn test-part2 [input]
+  (let [input (map #(* 811589153 %) input)
+        lst (map-indexed
+             (comp vec reverse vector)
+             input)]
+    (->> (iterate #(reduce move-item % lst) lst)
+         (drop 1)
+         (take 10)
+         last
+         (map first)
+         grove-coords
+         (reduce +))))
+
+#_(= 1623178306 (test-part2 (parse input-test)))
+
+
+#_(= 7848878698663
+     (do
+       (def res-test (test-part2 (parse input-real)))
+       (prn [:res res-test])
+       res-test))
