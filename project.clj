@@ -6,5 +6,7 @@
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/math.combinatorics "0.1.6"]
                  [org.clojure/data.priority-map "1.1.0"]
-                 [aysylu/loom "1.0.2"]]
+                 [aysylu/loom "1.0.2"]
+                 [net.cgrand/xforms "0.19.4"]
+                 [org.clojure/core.match "1.0.0"]]
   :repl-options {:init-ns adv2022.core})
