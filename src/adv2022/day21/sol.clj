@@ -38,8 +38,8 @@
   (fn [{:keys [solved left] :as state}]
     (let [more-solved
           (->> left
-               (filter #(every? solved (-> % second meta :deps)))
-               (reduce #(assoc %1 (first %2) ((get-f (second %2)) solved)) {}))]
+               (filter #(every? solved (-> % val meta :deps)))
+               (reduce #(assoc %1 (first %2) ((get-f (val %2)) solved)) {}))]
       (-> state
           (update :solved merge more-solved)
           (update :left #(apply dissoc % (keys more-solved)))))))
