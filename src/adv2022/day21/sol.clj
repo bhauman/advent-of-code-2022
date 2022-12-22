@@ -17,83 +17,61 @@
   (->> (string/replace s #":" "")
        string/split-lines
        (map #(str "[" % "]"))
-       (map edn/read-string)
-       (sort-by (comp number? second))
-       reverse))
+       (map edn/read-string)))
 
-(defn make-monkey-fn [vs]
-  (let [[d1 op d2] vs 
-        [dep1 dep2] (map keyword [d1 d2])]
-    (vary-meta (fn [monkey-map]
-                 (let [arg1 (get monkey-map dep1)
-                       arg2 (get monkey-map dep2)]
-                   (assert (and arg1 arg2))
-                   ((eval op) arg1 arg2)))
+(defn make-monkey-fn [[d1 op d2]]
+  (let [dep-keys (map keyword [d1 d2])]
+    (vary-meta #(apply (resolve op) (map % dep-keys))
                assoc
-               :deps #{dep1 dep2}
-               :symbolic (fn [monkey-map]
-                           (list
-                            op
-                            (get monkey-map dep1 dep1)
-                            (get monkey-map dep2 dep2))))))
+               :deps (set dep-keys)
+               :symbolic #(cons op (map % dep-keys)))))
 
 (defn init-state [monkeys]
-  (let [init
-        (->> monkeys
-             (map (fn [[k & vs]]
-                    [(keyword k)
-                     (if (number? (first vs))
-                       (first vs)
-                       (make-monkey-fn vs))]))
-             (group-by (comp number? second)))]
-    {:solved (into {} (get init true))
-     :left (into {} (get init false))}))
+  (->> monkeys
+       (map (fn [[k & [v & _ :as vs]]]
+              [(keyword k)
+               (if (number? v) v (make-monkey-fn vs))]))
+       (group-by (comp number? second))
+       (reduce-kv #(assoc %1 (if %2 :solved :left) (into {} %3)) {})))
 
-(defn solve [{:keys [solved left symbolic?] :as state}]
-  (let [get-f (if symbolic? #(-> % meta :symbolic) identity)
-        more-solved
-        (->> left
-             (filter #(every? solved (-> % second meta :deps)))
-             (reduce #(assoc %1 (first %2) ((get-f (second %2)) solved)) {}))]
-    (-> state
-        (update :solved merge more-solved)
-        (update :left (fn [left] (apply dissoc left (keys more-solved)))))))
+(defn make-solve [get-f]
+  (fn [{:keys [solved left] :as state}]
+    (let [more-solved
+          (->> left
+               (filter #(every? solved (-> % second meta :deps)))
+               (reduce #(assoc %1 (first %2) ((get-f (second %2)) solved)) {}))]
+      (-> state
+          (update :solved merge more-solved)
+          (update :left #(apply dissoc % (keys more-solved)))))))
 
 (defn part1 [input]
   (-> (->> (init-state input)
-           (iterate solve)
-           (drop-while #(get-in % [:left :root]))
-           first)
+           (iterate (make-solve identity))
+           (drop-while #(get-in % [:left :root])))
+      first
       (get-in [:solved :root])))
 
 (assert (= 152 (part1 (parse input-test))))
 
 (assert (= 157714751182692 (part1 (parse input-real))))
 
-
 (defn update-for-part2 [input]
-  (-> (into {}
-            (map (juxt first identity))
-            input)
+  (-> (into {} (map (juxt first identity)) input)
       (dissoc 'humn)
       (update 'root (fn [[k arg1 op arg2]] [k arg1 '- arg2]))
-      vals
-      (->> (sort-by (comp number? second))
-           reverse)))
+      vals))
 
 (defn get-symbolic-solution [input]
   (-> input
       (->> update-for-part2
            init-state
-           (iterate solve)
+           (iterate (make-solve identity))
            (partition 2 1)
-           (drop-while
-            (fn [[state next-state]] (not= state next-state)))
+           (drop-while #(apply not= %))
            ffirst)
       (assoc-in [:solved :humn] 'humn)
-      (assoc :symbolic? true)
       (->>
-       (iterate solve)
+       (iterate (make-solve #(-> % meta :symbolic)))
        (drop-while #(get-in % [:left :root]))
        first)
       (get-in [:solved :root])))
