@@ -95,30 +95,24 @@
 ;; simulate a cicular list
 ;; takes longer because negative nums are translated into positive nums
 
-(defn lazy-insert [lst item idx limit]
-  (if (= idx 0)
-    (cons item (take limit lst))
-    (cons (first lst)
-          (lazy-seq
-           (lazy-insert (rest lst) item (dec idx) (dec limit))))))
-
-(defn move-item [lst [index-diff _ :as item-a]]
+(defn item-mover [lst [index-diff _ :as item-a]]
   (if (zero? index-diff)
     lst
-    (let [new-size (dec (count lst))
-          diff (cond->> (mod (abs index-diff) new-size)
-                 (neg? index-diff) (- new-size))
-          items (->> (cycle lst)
-                     (drop-while #(not= item-a %))
-                     rest
-                     (take new-size))]
-      (lazy-insert (concat items items) item-a diff new-size))))
+    (let [new-size (dec (count lst))]
+      (->> (cycle lst)
+           (drop-while #(not= item-a %))
+           rest
+           (take new-size)
+           cycle
+           (drop (mod index-diff new-size))
+           (take new-size)
+           (cons item-a)))))
 
 (defn test-part1 [input]
   (let [lst (map-indexed
              (comp vec reverse vector)
              input)]
-    (->> (reduce move-item lst lst)
+    (->> (reduce item-mover lst lst)
          (map first)
          grove-coords
          (reduce +))))
@@ -140,7 +134,6 @@
          (reduce +))))
 
 #_(= 1623178306 (test-part2 (parse input-test)))
-
 
 #_(= 7848878698663
      (do
